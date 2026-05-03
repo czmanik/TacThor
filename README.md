@@ -202,4 +202,103 @@ If you're part of the community and want to collaborate, contribute, or test:
 
 TBD (recommended: MIT or Apache 2.0)
 
+---
+
+## 🚀 MVP Development Roadmap
+
+### 📅 Phase 1 — MVP (till January 2026)
+
+Goal: Deliver a **functional, field-testable prototype** for small to mid-scale airsoft events.
+
+#### Core Features
+- 📍 **Player Position Tracking**
+  - Configurable update intervals (30s – 5min)
+  - Battery-optimized location polling
+  - Online/offline state awareness
+
+- 🗺️ **Map Integration**
+  - Basic map view (online tiles)
+  - Player markers with team color differentiation
+  - Zoom & pan support
+
+- 🧩 **Unit System (Basic)**
+  - Unit types: infantry, recon, AT, sniper, spec ops
+  - Roles: commander, medic, radio operator
+  - Simple assignment system
+
+- 🎨 **Symbol System v1**
+  - Simplified tactical icons (SVG-based)
+  - NATO-inspired internal structure
+  - Clear visual differentiation (<1s readability goal)
+
+- 🔄 **Offline-first Behavior (Basic)**
+  - Local data caching
+  - Sync when connection is restored
+  - Graceful degradation without signal
+
+- 🔋 **Battery Optimization**
+  - Adaptive update intervals
+  - Reduced background activity
+
+---
+
+#### Technical Foundations
+- Flutter mobile app (Android first)
+- Local storage (SQLite / Hive TBD)
+- Modular architecture (UI / Map / Logic separation)
+- SVG rendering pipeline for icons
+
+---
+
+#### Testing & Validation
+- Small group field tests (5–20 players)
+- Real-world battery usage validation
+- UI clarity testing under stress conditions
+
+---
+
+### 🔮 Phase 2 — Extended Features (TBD, till Fall 2026)
+
+Goal: Expand TacThor into a **robust coordination platform** for large-scale milsim events.
+
+#### Planned Features
+- 📡 **Device-to-device Communication**
+  - Bluetooth / mesh networking concepts
+  - Local fallback communication layer
+
+- 🗺️ **Advanced Map Features**
+  - Offline maps (downloadable areas)
+  - Points of Interest (POI)
+  - Heatmaps / activity zones
+
+- 🧠 **Advanced Unit Management**
+  - Hierarchical structure (squad / platoon / HQ)
+  - Command delegation system
+  - Role-based permissions
+
+- ⚡ **Hybrid Symbol System**
+  - Full NATO APP-6 support (advanced mode)
+  - Simplified / hybrid display modes
+
+- 📊 **Event Analytics**
+  - Movement history
+  - Engagement zones
+  - Post-event analysis
+
+- 🔔 **Event System**
+  - Objectives
+  - Respawn zones
+  - Timed events / triggers
+
+---
+
+#### Future Considerations
+- Web dashboard for HQ
+- Integration with external tools
+- Expanded modding / plugin support
+
+---
+
+> Roadmap is subject to change based on community feedback and real-world testing.
+
 
