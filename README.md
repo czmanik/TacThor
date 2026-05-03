@@ -176,4 +176,30 @@ Core areas currently in progress:
 
 ## 📦 Project Structure (planned)
 
+---
+
+---
+
+## 🔮 Vision
+
+TacThor aims to become:
+
+> A standard tool for tactical coordination in the airsoft and milsim community.
+
+Not just an app — but a **shared platform and language** for players in the field.
+
+---
+
+## 📬 Contact
+
+If you're part of the community and want to collaborate, contribute, or test:
+
+→ open an issue or discussion on GitHub
+
+---
+
+## 🧾 License
+
+TBD (recommended: MIT or Apache 2.0)
+
 
