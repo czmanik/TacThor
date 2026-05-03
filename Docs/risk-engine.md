@@ -1,3 +1,1115 @@
+# TacThor — návrhová poznámka k Risk Engine
+
+## Účel
+
+TacThor není pouze mapa nebo aplikace pro sledování polohy.
+
+Jeho dlouhodobým cílem je poskytovat sdílený operační obraz a podporovat lidské rozhodování pomocí odhadu, jak se situace vyvíjí v prostoru a čase.
+
+Základní myšlenka je, že různé scénáře — airsoft, milsim operace, přírodní katastrofy, logistická selhání, události řízené počasím nebo civilní koordinace — lze popsat stejnými obecnými principy.
+
+Principy se zásadně nemění.
+
+Mění se pouze tyto věci:
+
+- terminologie
+- vstupní data
+- intenzita
+- koeficienty
+- prahové hodnoty
+- interpretace podle konkrétního scénáře
+
+Jinými slovy:
+
+> Stejné rovnice mohou popsat jak nepřátelský konvoj pohybující se oblastí, tak potok přetékající přes hráz rybníka.
+
+Systém by se neměl snažit automaticky velet lidem.
+
+Systém by měl pomáhat lidem dříve zaznamenat důležité změny, pochopit, proč se oblast stává rizikovou, identifikovat chybějící kapacity a efektivněji rozdělovat dostupné zdroje.
+
+---
+
+## Základní teze
+
+Hrozba není jen objekt na mapě.
+
+Hrozba je proces.
+
+Hrozba:
+
+- existuje v prostoru
+- mění se v čase
+- má intenzitu
+- má směr nebo trend
+- ovlivňuje cíle, lidi, terén, trasy nebo zdroje
+- musí být porovnávána s dostupnou kapacitou
+
+Příklady hrozeb nebo hazardů:
+
+- pohyb nepřátelské jednotky
+- nepřátelský tlak v blízkosti objektivu
+- konvoj pohybující se po silnici
+- potok přetékající přes hráz
+- povodňová voda šířící se obcí
+- lesní požár hnaný větrem
+- zablokované přístupové cesty
+- přetížené týmy
+- chybějící vybavení
+- chybějící přepravní kapacita
+- špatné počasí ovlivňující pohyb nebo bezpečnost
+- ztráta komunikace
+
+Ačkoliv tyto situace vypadají rozdílně, rozhodovací problém je podobný:
+
+> Odhadnout vývoj, vyhodnotit riziko, identifikovat kapacitní mezery a podpořit rozdělení zdrojů.
+
+---
+
+## Sdílený princip
+
+TacThor by měl používat jeden sdílený konceptuální a matematický model pro herní i civilní koordinační scénáře.
+
+Systém by se měl vyhnout vytváření dvou oddělených enginů.
+
+Místo toho by měl používat jeden sdílený engine s různými konfiguračními profily.
+
+```text
+SituationEngine
+  ├── ObservationLayer
+  ├── PredictionLayer
+  ├── RiskLayer
+  └── DecisionSupportLayer
+```
+
+Možné modely specifické pro jednotlivé scénáře:
+
+```text
+GameRiskModel
+CrisisRiskModel
+WeatherRiskModel
+ResourceGapModel
+```
+
+Abstraktní model zůstává stejný.
+
+Terminologie se mění.
+
+| Hra / Milsim | Civilní / krizová koordinace |
+| --- | --- |
+| enemy pressure | hrozba / zasažená oblast |
+| enemy unit | zdroj hrozby / zdroj incidentu |
+| friendly unit | tým |
+| objective | úkol / cílová lokalita |
+| respawn | operační základna |
+| HQ | koordinační centrum |
+| resources | lidé, vozidla, vybavení |
+| battlefield | zasažený operační prostor |
+| attack route | přístupová trasa |
+| frontline | hranice hazardu / zasažená zóna |
+
+---
+
+## Obecný vzorec rizika
+
+Zjednodušený obecný vzorec:
+
+```text
+risk(area, time) =
+  hazard_intensity
+  * exposure
+  * vulnerability
+  * trend
+  * access_difficulty
+  * weather_modifier
+  / effective_capacity
+```
+
+Kde:
+
+```text
+hazard_intensity   = síla nebo závažnost hrozby
+exposure           = co je v oblasti vystaveno působení hrozby
+vulnerability      = jak citlivý je zasažený cíl nebo oblast
+trend              = zda se situace zlepšuje nebo zhoršuje
+access_difficulty  = jak obtížné je oblast dosáhnout nebo v ní působit
+weather_modifier   = dopad aktuálního a předpovídaného počasí
+effective_capacity = reálně použitelná dostupná kapacita, ne pouze hrubé počty
+```
+
+Nejjednodušší užitečná abstrakce je:
+
+```text
+risk_pressure = demand / effective_capacity
+```
+
+nebo:
+
+```text
+risk_pressure = threat_development / available_capacity
+```
+
+To platí jak pro:
+
+```text
+nepřátelský tlak > vlastní plánované jednotky
+```
+
+tak pro:
+
+```text
+požadavky / zasažené lokality > dostupní lidé, vozidla nebo vybavení
+```
+
+---
+
+## Situační tlak
+
+TacThor by měl vyhodnocovat tlak vůči kapacitě.
+
+Tlak vzniká tehdy, když se vyvíjející hrozba nebo poptávka po zásahu dostává nad úroveň, kterou mohou dostupné zdroje rozumně zvládnout.
+
+Příklady:
+
+```text
+12 hlášení nepřítele v oblasti
+6 vlastních hráčů plánovaných v oblasti
+nízká viditelnost
+vysokoprioritní objektiv poblíž
+→ zvýšený taktický tlak
+```
+
+```text
+8 otevřených hlášení škod
+2 dostupné dobrovolnické týmy
+1 zablokovaná cesta
+silný déšť očekávaný do 2 hodin
+→ zvýšený tlak v krizové koordinaci
+```
+
+Systém by neměl pouze počítat jednotky nebo zdroje.
+
+Měl by odhadovat, zda jsou tyto zdroje skutečně použitelné.
+
+Příklad:
+
+```text
+10 lidí daleko za zablokovanou cestou může poskytovat menší efektivní kapacitu
+než 3 lidé již poblíž se správným vybavením.
+```
+
+---
+
+## Efektivní kapacita
+
+Hrubý počet zdrojů nestačí.
+
+Efektivní kapacita by měla zahrnovat:
+
+```text
+effective_capacity =
+  resource_count
+  * suitability
+  * readiness
+  * access_factor
+  * eta_factor
+```
+
+Kde:
+
+```text
+resource_count = počet nebo síla dostupných zdrojů
+suitability    = zda je zdroj vhodný pro řešení daného typu problému
+readiness      = zda je zdroj připraven jednat
+access_factor  = zda se zdroj může dostat do oblasti
+eta_factor     = za jak dlouho může zdroj realisticky dorazit
+```
+
+Příklady:
+
+- vozidlo bez řidiče má omezenou kapacitu
+- čerpadlo bez dopravy má omezenou kapacitu
+- družstvo bez komunikace má sníženou operační hodnotu
+- tým za zablokovanou cestou může být nedostupný
+- zdravotník mimo užitečný dosah má nízký okamžitý efekt
+- odstřelovač bez viditelnosti má sníženou hodnotu
+- radista bez přímé viditelnosti nebo retranslace nemusí vyřešit ztrátu komunikace
+- bagr bez obsluhy nebo paliva není plná kapacita
+- třicet dobrovolníků bez nářadí může být méně efektivních než pět vybavených lidí
+
+---
+
+## Poptávka po zásahu
+
+Poptávka po zásahu popisuje, kolik reakce nebo pozornosti situace vyžaduje.
+
+Obecný model poptávky:
+
+```text
+demand =
+  hazard_intensity
+  * exposure
+  * vulnerability
+  * trend
+  * access_difficulty
+  * weather_modifier
+```
+
+Pro airsoft / milsim:
+
+```text
+demand =
+  enemy_presence
+  * objective_importance
+  * own_plan_weakness
+  * movement_trend
+  * terrain_difficulty
+  * weather_modifier
+```
+
+Pro civilní / krizovou koordinaci:
+
+```text
+demand =
+  hazard_severity
+  * affected_assets
+  * vulnerability
+  * time_urgency
+  * access_difficulty
+  * weather_modifier
+```
+
+---
+
+## Saturace rizikového tlaku
+
+Rizikový tlak by v uživatelském rozhraní neměl růst nekonečně.
+
+Užitečné normalizované rizikové skóre lze vypočítat se saturací:
+
+```text
+risk_score = 100 * (1 - exp(-k * risk_pressure))
+```
+
+Kde:
+
+```text
+risk_score    = normalizovaná hodnota mezi 0 a 100
+k             = koeficient citlivosti
+risk_pressure = demand / effective_capacity
+```
+
+Tím se zabrání nerealistickým skokům, ale nedostatek kapacity zůstane viditelný.
+
+Příklad:
+
+```text
+nízký tlak    → nízké skóre
+střední tlak  → rostoucí skóre
+velmi vysoký tlak → blíží se 100
+```
+
+---
+
+## Riziko, priorita, pozornost a důvěra
+
+TacThor by měl držet tyto hodnoty odděleně:
+
+```text
+risk_score
+priority_score
+attention_score
+confidence
+```
+
+Souvisí spolu, ale nejsou totéž.
+
+```text
+risk_score      = objektivní tlak nebo nebezpečí v oblasti
+priority_score  = důležitost oblasti, objektivu nebo úkolu
+attention_score = co má být nyní předloženo lidské pozornosti
+confidence      = jak spolehlivé je vyhodnocení
+```
+
+Navržený tvar:
+
+```text
+attention_score =
+  risk_score
+  * priority_modifier
+  * forecast_modifier
+  * uncertainty_modifier
+```
+
+To umožňuje systému rozlišovat mezi:
+
+- vysoce rizikovými, ale nízkoprioritními oblastmi
+- středně rizikovými, ale kriticky prioritními oblastmi
+- situacemi s nízkou důvěrou, které vyžadují ověření
+- zhoršujícími se trendy, které vyžadují včasnou pozornost
+- starými hlášeními, která už nemají dominovat mapě
+- oblastmi, kde chybějící kapacita znamená víc než samotné hrubé nebezpečí
+
+---
+
+## Priorita
+
+Priorita není totéž co riziko.
+
+Vysoce riziková oblast může mít nízkou operační prioritu.
+
+Středně riziková oblast může mít kritickou operační prioritu.
+
+Příklady:
+
+```text
+Vysoké riziko, nízká priorita:
+Nepřátelská aktivita daleko od hlavního objektivu.
+```
+
+```text
+Střední riziko, vysoká priorita:
+Pohyb nepřítele poblíž kritického objektivu.
+```
+
+```text
+Vysoké riziko, nízká priorita:
+Zaplavené pole bez lidí, infrastruktury nebo požadavku na přístup.
+```
+
+```text
+Střední riziko, vysoká priorita:
+Částečně zablokovaná cesta, která je jedinou trasou k několika nevyřešeným úkolům.
+```
+
+TacThor by proto neměl slučovat všechny hodnoty do jednoho skrytého čísla.
+
+Měl by počítat více hodnot a z nich odvozovat pozornost.
+
+```text
+risk_score      → jak špatná situace je
+priority_score  → jak důležitá je
+attention_score → jak naléhavě se na ni mají lidé podívat
+```
+
+---
+
+## Stáří informace a důvěra
+
+Hlášení nejsou trvalá pravda.
+
+Jsou to pozorování se stářím a nejistotou.
+
+Každé pozorování by mělo obsahovat:
+
+```text
+timestamp
+source
+confidence
+decay_rate
+```
+
+Navržený pokles důvěry:
+
+```text
+confidence_now =
+  initial_confidence * exp(-age / half_life)
+```
+
+Různé typy hlášení by měly mít různé poločasy platnosti.
+
+Airsoftová kontaktní hlášení stárnou rychle.
+
+Příklady:
+
+```text
+nepřítel viděn před 3 minutami  → stále relevantní
+nepřítel viděn před 45 minutami → nízká důvěra
+```
+
+Povodňová nebo infrastrukturní hlášení mohou stárnout pomaleji.
+
+Příklady:
+
+```text
+cesta zablokována před 30 minutami → pravděpodobně stále relevantní
+stav vody ze včerejška              → může být zastaralý
+```
+
+Počasí může měnit rychlost stárnutí informací.
+
+Příklad:
+
+```text
+předpověď silného deště → hlášení související s vodou stárnou rychleji
+předpověď silného větru → hlášení související s požárem stárnou rychleji
+```
+
+---
+
+## Typy vývoje hrozeb / hazardů
+
+TacThor by měl podporovat více modelů vývoje hrozeb.
+
+### 1. Náhlé / stochastické hrozby
+
+Příklady:
+
+- neočekávaný kontakt s nepřítelem
+- léčka
+- překvapivý útok
+- tornádo
+- náhlý incident
+- neočekávaný propad komunikace
+
+Charakteristiky:
+
+- nízká předvídatelnost
+- rychlá změna
+- vysoká nejistota
+- krátký poločas platnosti hlášení
+- vyžaduje rychlé potvrzení
+
+Airsoft se často chová tímto způsobem.
+
+Hrozba se může objevit náhle a nepředvídatelně.
+
+Model proto musí agresivně pracovat s nejistotou a stárnutím hlášení.
+
+---
+
+### 2. Frontální / postupující hrozby
+
+Příklady:
+
+- povodeň
+- lesní požár
+- šířící se zasažená oblast
+- postupující nepřátelský tlak
+- rozšiřující se pátrací oblast
+- pohybující se bouřková buňka
+
+Charakteristiky:
+
+- viditelná nebo odhadovaná hranice
+- směr lze často odhadnout
+- rychlost lze někdy odhadnout
+- počasí a terén mají velký vliv
+- předpovědní horizont je užitečný
+
+Povodně jsou tomuto modelu často blíže.
+
+Mohou se chovat jako pomalu postupující fronta.
+
+Díky tomu jsou předvídatelnější než náhlý taktický kontakt, ale stále se mohou rychle změnit, pokud selže hráz, most, silnice nebo jiný kritický bod.
+
+---
+
+### 3. Logistické / kapacitní hrozby
+
+Příklady:
+
+- nedostatek vybavení
+- zablokované trasy
+- přetížená základna
+- vyčerpané týmy
+- chybějící doprava
+- ztráta komunikace
+- chybějící obsluha pro dostupné vybavení
+- nedostatek paliva
+- příliš mnoho nevyřešených požadavků
+- příliš mnoho objektivů přiřazených jednomu týmu
+
+Charakteristiky:
+
+- nemusí vypadat jako přímá hrozba
+- často se projeví zpožděními
+- může způsobovat kaskádová selhání
+- přímo ovlivňuje efektivní kapacitu
+
+Tento typ je důležitý, protože ne každá nebezpečná situace je způsobena vnějším hazardem.
+
+Někdy riziko vzniká tím, že systém není schopen reagovat.
+
+---
+
+## Mapová reprezentace
+
+TacThor by měl vyhodnocovat riziko prostorově.
+
+Hrozba může být reprezentována jako:
+
+```text
+Point
+LineString
+Polygon
+Grid / raster cell
+Network node
+Network edge
+```
+
+Příklady:
+
+```text
+Point      = hlášení, incident, tým, zdroj, zablokované místo
+LineString = silnice, trasa, řeka, koridor pohybu
+Polygon    = zasažená oblast, povodňová zóna, požární zóna, zóna nepřátelského tlaku
+Grid cell  = vypočtené rizikové pole
+Node       = základna, most, objektiv, sklad, retranslační bod
+Edge       = přístupová trasa, zásobovací trasa, komunikační spoj
+```
+
+Oblast by neměla být hodnocena pouze podle velikosti.
+
+Velké prázdné pole může znamenat méně než malý most, silnice nebo základna.
+
+Lepší model:
+
+```text
+area_impact =
+  area_size
+  * exposure_density
+  * importance_factor
+```
+
+Nebo pro výpočet na mřížce:
+
+```text
+risk(area) =
+  sum(risk(cell)) for all cells inside the area
+```
+
+Příklad:
+
+```text
+cell_risk =
+  hazard_intensity_cell
+  * exposure_cell
+  * vulnerability_cell
+  / effective_capacity_nearby
+```
+
+---
+
+## Přístupová síť a úzká hrdla
+
+Některá místa mají větší význam než jejich fyzická velikost.
+
+Příklady:
+
+- most
+- hráz
+- silniční křižovatka
+- přístupová cesta
+- operační základna
+- zásobovací bod
+- radiová retranslace
+- checkpoint
+- hlavní objektiv
+- evakuační bod
+- sklad vybavení
+
+TacThor by s nimi měl pracovat jako se síťovými uzly.
+
+```text
+node = místo, základna, most, objektiv, sklad, retranslace
+edge = silnice, trasa, přístupová cesta, zásobovací cesta, komunikační cesta
+```
+
+Systém by měl rozpoznat, když hrozba ovlivňuje úzké hrdlo.
+
+Příklad:
+
+```text
+Tato lokalita není největší zasaženou oblastí,
+ale její ztráta zablokuje přístup ke 3 nevyřešeným úkolům.
+```
+
+Airsoftový příklad:
+
+```text
+Tato cesta není hlavní objektiv,
+ale její ztráta odřízne posilovou trasu k objektivu Delta.
+```
+
+Civilní koordinační příklad:
+
+```text
+Tento most je jen jeden bod,
+ale pokud selže, dva týmy a jeden sklad vybavení se stanou nedostupnými.
+```
+
+---
+
+## Kaskádové efekty
+
+Jedna událost může vytvořit další problém.
+
+TacThor by měl podporovat základní modelování závislostí a kaskád.
+
+Civilní příklad:
+
+```text
+povodeň
+→ zablokovaná cesta
+→ tým se nemůže dostat k úkolu
+→ úkol zůstává nevyřešený
+→ priorita roste
+→ základna se přetěžuje
+```
+
+Airsoftový příklad:
+
+```text
+ztráta radisty
+→ důvěra v komunikaci klesá
+→ polohy jednotek zastarávají
+→ riziko objektivu roste
+→ vyžadována pozornost HQ
+```
+
+Příklad počasí:
+
+```text
+předpověď silného deště
+→ přístup po cestách se zhoršuje
+→ ETA roste
+→ efektivní kapacita klesá
+→ tlak nevyřešených úkolů roste
+```
+
+Kaskádové efekty by neměly být skryté.
+
+Systém by je měl vysvětlit ve výstupu hodnocení.
+
+---
+
+## Počasí jako modifikátor rizika
+
+Počasí není jen informační překryvná vrstva.
+
+Je to přímý modifikátor rizika.
+
+V airsoftu / milsimu:
+
+- déšť ovlivňuje pohyb
+- mlha ovlivňuje viditelnost
+- vítr ovlivňuje zvuk a kouř
+- horko ovlivňuje únavu a zdravotní riziko
+- chlad ovlivňuje výdrž a bezpečnost
+- bouřky ovlivňují bezpečnost akce a komunikaci
+- špatná viditelnost snižuje důvěru v hlášení
+
+V civilním / krizovém použití:
+
+- déšť ovlivňuje povodně a přístupnost terénu
+- vítr ovlivňuje šíření požáru a pády stromů
+- teplota ovlivňuje bezpečnost lidí a týmů
+- viditelnost ovlivňuje pohyb a pátrací operace
+- bouřky ovlivňují bezpečnost cest a infrastrukturu
+- předpovězený déšť může zvýšit naléhavost ještě před skutečným zhoršením situace
+
+Počasí by mělo ovlivňovat:
+
+```text
+hazard_intensity
+access_difficulty
+trend
+confidence
+effective_capacity
+```
+
+Příklad:
+
+```text
+weather_modifier = 1.0   → neutrální
+weather_modifier = 1.2   → mírně zhoršuje situaci
+weather_modifier = 1.5   → výrazně zhoršuje situaci
+weather_modifier = 0.8   → zlepšuje nebo snižuje tlak
+```
+
+Počasí by mělo podporovat:
+
+```text
+aktuální počasí
+předpověď počasí
+ruční meteorologickou poznámku HQ
+```
+
+---
+
+## Příklady scénářů
+
+### Airsoft / Milsim příklad
+
+Situace:
+
+```text
+Objektiv Delta má vysokou prioritu.
+V okolí je více hlášení nepřítele.
+Vlastní jednotky plánované pro oblast mají zpoždění.
+Viditelnost se zhoršuje.
+Hlášení jsou čerstvá, ale nejsou plně potvrzená.
+```
+
+Hodnocení:
+
+```text
+VYSOKÁ POZORNOST — Objektiv Delta
+
+Důvody:
+- hlášená přítomnost nepřítele převyšuje plánovanou vlastní kapacitu
+- blízké vlastní pozice jsou zastaralé
+- viditelnost je zhoršená
+- objektiv má vysokou strategickou prioritu
+- důvěra v hlášení nepřítele je stále relevantní
+
+Chybějící schopnosti:
+- průzkum
+- komunikační retranslace
+- posily
+```
+
+---
+
+### Civilní / povodňový příklad
+
+Situace:
+
+```text
+Potok přetéká poblíž hráze rybníka.
+Směr proudění míří k části obce.
+V oblasti je několik nevyřešených požadavků.
+Poblíž je pouze jeden tým.
+Je předpovídán další déšť.
+Hlavní přístupová trasa může být zablokována.
+```
+
+Hodnocení:
+
+```text
+KRITICKÁ POZORNOST — Sektor obce B
+
+Důvody:
+- zasažená oblast obsahuje několik nevyřešených požadavků
+- dostupná kapacita je pod požadovaným prahem
+- předpověď hlásí další srážky
+- hlavní přístupová cesta se může zhoršit
+- trend hazardu se zhoršuje
+
+Chybějící schopnosti:
+- doprava
+- čerpadlo
+- technická podpora
+- další dobrovolnický tým
+```
+
+---
+
+### Logistický příklad
+
+Situace:
+
+```text
+K dispozici je několik týmů.
+Dva už jsou ale přiřazené.
+Jeden nemá dopravu.
+Jeden je za zablokovanou cestou.
+Pouze jeden tým může realisticky dosáhnout oblasti úkolu.
+```
+
+Hodnocení:
+
+```text
+STŘEDNÍ RIZIKO / VYSOKÁ KAPACITNÍ MEZERA
+
+Důvody:
+- hrubý počet zdrojů vypadá dostatečně
+- efektivně dostupná kapacita je nízká
+- omezení přístupu snižují použitelné zdroje
+- dokončení úkolu se může zpozdit
+
+Chybějící schopnosti:
+- doprava
+- potvrzení přístupové trasy
+```
+
+---
+
+## Navržené datové struktury
+
+### Stav hazardu
+
+```ts
+type HazardType =
+  | "enemy_pressure"
+  | "flood"
+  | "fire"
+  | "weather"
+  | "blocked_access"
+  | "resource_gap"
+  | "communication_loss";
+
+type HazardState = {
+  id: string;
+  type: HazardType;
+
+  geometry: Point | LineString | Polygon;
+
+  intensity: number;       // 0..1
+  direction?: number;      // stupně
+  speed?: number;          // m/min, km/h nebo abstraktní hodnota
+  trend: "improving" | "stable" | "worsening";
+
+  confidence: number;      // 0..1
+  observedAt: Date;
+  forecastUntil?: Date;
+
+  affectedObjectives: string[];
+  affectedRoutes: string[];
+  affectedResources: string[];
+};
+```
+
+### Stav zdroje
+
+```ts
+type ResourceCapability =
+  | "people"
+  | "transport"
+  | "medical"
+  | "engineering"
+  | "drying"
+  | "pumping"
+  | "radio"
+  | "recon"
+  | "at"
+  | "sniper"
+  | "command";
+
+type ResourceState = {
+  id: string;
+  name: string;
+
+  capabilities: ResourceCapability[];
+
+  location: GeoPoint;
+  assignedTaskId?: string;
+
+  readiness: number;       // 0..1
+  availability: number;    // 0..1
+  fatigue?: number;        // 0..1
+
+  capacityValue: number;
+};
+```
+
+### Hodnocení oblasti
+
+```ts
+type AreaAssessment = {
+  areaId: string;
+
+  riskScore: number;       // 0..100
+  priorityScore: number;   // 0..100
+  attentionScore: number;  // 0..100
+  confidence: number;      // 0..1
+
+  trend: "improving" | "stable" | "worsening";
+
+  reasons: string[];
+
+  missingCapabilities: ResourceCapability[];
+
+  affectedTasks: string[];
+  affectedRoutes: string[];
+};
+```
+
+---
+
+## Navržená konfigurace
+
+TacThor by neměl mít všechny koeficienty zadrátované napevno.
+
+Každá událost by měla mít možnost váhy upravit.
+
+Příklad herní konfigurace:
+
+```yaml
+risk_model:
+  type: game
+
+  weights:
+    hazard: 1.3
+    exposure: 1.0
+    vulnerability: 1.1
+    trend: 0.9
+    weather: 0.6
+    access: 0.7
+    capacity: 1.4
+    priority: 0.25
+
+  report_decay:
+    enemy_contact_half_life_minutes: 20
+    position_half_life_minutes: 10
+    route_status_half_life_minutes: 60
+
+  thresholds:
+    low: 25
+    medium: 50
+    high: 75
+    critical: 90
+```
+
+Příklad krizové konfigurace:
+
+```yaml
+risk_model:
+  type: crisis
+
+  weights:
+    hazard: 1.4
+    exposure: 1.3
+    vulnerability: 1.5
+    trend: 1.2
+    weather: 1.1
+    access: 1.0
+    capacity: 1.6
+    priority: 0.35
+
+  report_decay:
+    hazard_half_life_minutes: 120
+    road_status_half_life_minutes: 180
+    resource_status_half_life_minutes: 60
+    weather_forecast_refresh_minutes: 30
+
+  thresholds:
+    low: 20
+    medium: 45
+    high: 70
+    critical: 85
+```
+
+Stejný základní engine tak může sloužit více scénářům.
+
+Mění se pouze váhy, terminologie a prahové hodnoty.
+
+---
+
+## Testování pomocí airsoftu
+
+Airsoft lze použít jako bezpečné testovací prostředí pro širší model situačního povědomí.
+
+Poskytuje:
+
+- neúplné informace
+- mlhu války
+- pohybující se jednotky
+- přetížené velení
+- problémy s radiovou komunikací
+- měnící se počasí
+- nejistá hlášení
+- omezené zdroje
+- časový tlak
+- neočekávané taktické situace
+
+Po každé akci by měl TacThor vyhodnotit:
+
+```text
+precision:
+  kolik vysoce rizikových oblastí se stalo skutečnými problémy
+
+recall:
+  kolik skutečných problémů bylo detekováno předem
+
+lead_time:
+  kolik minut před problémem systém vyvolal pozornost
+
+false_positive_cost:
+  kolik pozornosti bylo promarněno na zbytečných upozorněních
+```
+
+Cílem není, aby systém křičel neustále.
+
+Cílem je, aby zvedl pozornost ve správný okamžik.
+
+---
+
+## Podpora rozhodování, ne autopilot
+
+TacThor by neměl automaticky velet lidem.
+
+Engine by měl podporovat lidské rozhodování tím, že zvýrazní:
+
+- kde se situace zhoršuje
+- kde je kapacita nedostatečná
+- kde jsou informace zastaralé
+- kde může počasí změnit situaci
+- kde se trasa, základna nebo úkol stává kritickým
+- kde je potřeba lidské rozhodnutí
+
+Systém by měl vysvětlit, proč je oblast označena jako riziková.
+
+Špatný výstup:
+
+```text
+Riziko oblasti Delta: 87
+```
+
+Dobrý výstup:
+
+```text
+VYSOKÁ POZORNOST — Oblast Delta
+
+Důvody:
+- tlak hrozby roste
+- dostupná kapacita je pod plánovanou úrovní
+- přístupová trasa je zhoršená
+- předpověď počasí zhorší situaci do 2 hodin
+- důvěra v poslední terénní hlášení klesá
+
+Chybějící schopnosti:
+- doprava
+- technická podpora
+- komunikační retranslace
+```
+
+Cílem není dokonale předpovědět budoucnost.
+
+Cílem je:
+
+> zkrátit čas mezi důležitým signálem a správnou lidskou pozorností.
+
+---
+
+## Shrnutí návrhu
+
+TacThor by měl chápat airsoft jako bezpečné testovací prostředí pro širší model situačního povědomí.
+
+Stejné obecné rovnice a principy platí napříč doménami:
+
+```text
+vývoj hrozby
++ expozice
++ zranitelnost
++ obtížnost přístupu
++ počasí
+- efektivní kapacita
+= operační tlak
+```
+
+Koeficienty, prahové hodnoty, terminologie a vstupní data se mění podle scénáře.
+
+Princip zůstává stejný:
+
+> odhadovat vývoj, vyhodnocovat riziko, identifikovat kapacitní mezery a pomáhat lidem efektivně rozdělovat zdroje.
+
+TacThor tedy není pouze mapa hráčů.
+
+Je to systém pro odhad vývoje, rizik a kapacit v prostoru a čase.
+
+----
+
 # TacThor Risk Engine Design Note
 
 ## Purpose
