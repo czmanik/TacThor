@@ -1,0 +1,167 @@
+# TacThor – Product Specification
+
+## 🎯 Cíl aplikace
+
+TacThor je offline-first velitelský systém pro airsoft / LARP operace.
+
+Hlavní cíl:
+
+- zlepšit přehled velení o situaci
+- umožnit koordinaci jednotek i bez signálu
+- dát hráčům kontext („proč něco dělám“)
+
+---
+
+## 🧠 Hlavní princip
+
+TacThor není jen mapa.
+
+Je to systém, který:
+
+- sbírá data (pozice, statusy, intel)
+- interpretuje situaci
+- vrací zpět srozumitelný obraz
+
+---
+
+## 🧩 Hlavní funkce
+
+### 🗺️ Mapa
+
+- vlastní jednotky
+- nepřátelský výskyt (bod / oblast / koridor)
+- plánované trasy
+- body zájmu
+- heatmapy (kontakt, hrozba, konektivita)
+
+---
+
+### 👥 Jednotky
+
+- týmy (ALFA10, BRAVO20…)
+- skupiny (ALFA–DELTA)
+- frakce (BLUE / RED)
+
+Každá jednotka má:
+
+- pozici
+- status
+- bojeschopnost
+- směr pohybu
+
+---
+
+### 📊 Status
+
+Jednotky hlásí:
+
+- pohyb (idle / moving / attack…)
+- kontakt (no_contact / engaged…)
+- zdraví (ok / wounded / kia…)
+- munice (ok / low / empty…)
+
+---
+
+### 🔁 Respawn
+
+- jednotlivci: cooldown v appce
+- jednotky: agregovaný návrat
+- odhad „combat ready“
+
+---
+
+### 🎯 Úkoly
+
+- zadávání úkolů týmům
+- časová platnost
+- stav (assigned / active / done)
+
+---
+
+### 👁️ Enemy Intel
+
+- hlášení nepřítele
+- seskupování do jednotek
+- směr pohybu
+- odhad budoucí pozice
+
+---
+
+### 🔳 QR systém
+
+- offline vyhodnocení
+- časová logika
+- validace polohy (radius)
+
+---
+
+### 🧠 Big Picture
+
+Automatické výstupy:
+
+- „Silný kontakt v sektoru C4“
+- „Slabé krytí jihu“
+- „ALFA postupuje na východ“
+
+---
+
+### 📡 Offline-first
+
+- vše funguje bez signálu
+- data se ukládají lokálně
+- sync probíhá při připojení
+
+---
+
+### 📶 Low-bandwidth režim
+
+Optimalizace pro extrémně slabý signál:
+
+- malé eventy
+- batchování
+- priorita dat
+- žádná redundance
+
+---
+
+### 🔋 Baterie
+
+- adaptive GPS (LOW / MEDIUM / HIGH)
+- activity detection
+- foreground service
+
+Cíl:
+👉 24h provoz
+
+---
+
+## 👥 Role
+
+- Game Master
+- Faction Command
+- Group Command
+- Team Leader
+- Team Member
+
+---
+
+## 🎮 Použití ve hře
+
+TacThor řeší problémy:
+
+❌ chaos komunikace  
+❌ nejasné úkoly  
+❌ žádný přehled  
+
+→
+
+✔ koordinace  
+✔ přehled  
+✔ lepší zážitek  
+
+---
+
+## 🧭 Filosofie
+
+> Nečekej perfektní data.  
+> Stačí dostatečně dobrý obraz situace.
